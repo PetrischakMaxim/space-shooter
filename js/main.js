@@ -3,7 +3,7 @@ import {
 } from "./library/engine.js";
 
 let gameSize = 512;
-let sizeCoef = 1.25;
+
 let g = game(
     gameSize, gameSize, setup,
     [
@@ -17,30 +17,30 @@ let g = game(
     load
 );
 
-
 //Game variables
 const {
     canvas,
     rectangle,
     progressBar,
     assets,
-    group,
+    text,
     sprite,
-    stage,
     keyboard,
+    stage,
     circle,
-    shoot,
+    group,
     remove,
     contain,
     randomInt,
     hit,
-    text,
+    shoot,
     multipleCircleCollision,
     randomFloat
 } = g;
 
-let rocket, background, gameScene, bullets, asteroids, rocketHit, score, scoreMessage, healthBar , fire;
+let rocket, background, gameScene, bullets, asteroids, rocketHit, score, scoreMessage, healthBar;
 let font = "20px puzzler";
+
 let topOffset = 40;
 let localBounds = {x: 0, y: topOffset, width: stage.width, height: stage.height};
 
@@ -73,15 +73,141 @@ function setup() {
     initScore();
     topBar.addChild(scoreMessage);
 
-
-    initRocket();
-
+    rocket = initRocket();
+    stage.putCenter(rocket);
     gameScene = group(background, rocket, topBar);
 
     generateAsteroids();
-    setEvents();
+    setEvents(rocket, rocket.shotBullet);
 
     g.state = play;
+}
+
+function initRocket() {
+    let friction = 0.9;
+    let acceleration = 0.5;
+    let rotateStep = 0.05;
+    let coefficient = 1.25;
+    let fire = null;
+
+    rocket = sprite(assets["images/spaceship.png"]);
+    rocket.width = 93 / coefficient;
+    rocket.height = 50 / coefficient;
+    rocket.accelerationX = acceleration;
+    rocket.accelerationY = acceleration;
+    rocket.frictionX = friction;
+    rocket.frictionY = friction;
+    rocket.mass = acceleration + (rocket.diameter / 32);
+    rocket.rotationSpeed = 0;
+    rocket.moveForward = false;
+    fire = setupFire();
+    rocket.addChild(fire);
+
+    function setupFire() {
+        fire = sprite(assets["images/fire.png"]);
+        fire.width = 78 / coefficient;
+        fire.height = 39 / coefficient;
+        fire.x = rocket.width * -1 + 25;
+        fire.y = 5;
+        fire.burn = (scale = 1) => {
+            fire.scaleX = scale;
+            fire.scaleY = scale;
+        }
+        return fire;
+    }
+
+    rocket.shotBullet = () => {
+        shoot(
+            rocket,
+            rocket.rotation,
+            50,
+            5,
+            bullets,
+            () => circle(randomInt(5, 10), 'yellow')
+        );
+    }
+
+    rocket.turnLeft = () => rocket.rotationSpeed = rotateStep * -1;
+    rocket.turnRight = () => rocket.rotationSpeed = rotateStep;
+    rocket.stop = () => rocket.rotationSpeed = 0;
+    rocket.toggleMovement = (flag) => rocket.moveForward = flag;
+
+    rocket.startMovement = () => {
+        rocket.rotation += rocket.rotationSpeed;
+        if (rocket.moveForward) {
+            rocket.vx += rocket.accelerationX * Math.cos(rocket.rotation);
+            rocket.vy += rocket.accelerationY * Math.sin(rocket.rotation);
+        } else {
+            rocket.vx *= rocket.frictionX;
+            rocket.vy *= rocket.frictionY;
+        }
+        rocket.x += rocket.vx;
+        rocket.y += rocket.vy;
+    }
+
+    rocket.fly = (callback) => {
+        fire.burn(randomFloat(0.6, 0.99));
+        rocket.startMovement();
+        contain(rocket, localBounds);
+        if (isHit()) {
+            callback();
+        }
+    }
+
+    function isHit() {
+        if (rocketHit) {
+            rocket.alpha = 0.5;
+        } else {
+            rocket.alpha = 1;
+        }
+        return rocketHit;
+    }
+    return rocket;
+}
+
+function setEvents(sprite, callback) {
+    let leftArrow = keyboard(37);
+    let upArrow = keyboard(38);
+    let rightArrow = keyboard(39);
+    let space = keyboard(32);
+
+    leftArrow.press = sprite.turnLeft;
+    leftArrow.release = () => {
+        if (!rightArrow.isDown) sprite.stop();
+    }
+    rightArrow.press = sprite.turnRight;
+    rightArrow.release = () => {
+        if (!leftArrow.isDown) sprite.stop();
+    }
+    upArrow.press = () => sprite.toggleMovement(true);
+    upArrow.release = () => sprite.toggleMovement(false);
+
+    space.press = callback;
+}
+
+function bulletsFly() {
+    bullets = bullets.filter(bullet => {
+        bullet.x += bullet.vx;
+        bullet.y += bullet.vy;
+
+        bulletHitWithAsteroid(bullet, asteroids)
+        let boundsContain = contain(bullet, localBounds);
+        if (boundsContain) {
+            remove(bullet);
+            return false;
+        }
+
+        return true;
+    });
+}
+
+function bulletHitWithAsteroid(bullet, asteroids) {
+    hit(bullet, asteroids, false, false, false,
+        (collision, asteroid) => {
+            destroyAsteroid(asteroid);
+            updateScore();
+        }
+    );
 }
 
 function initHealthBar() {
@@ -132,125 +258,6 @@ function generateAsteroids() {
     }
 }
 
-function initRocket() {
-    let friction = 0.9;
-    let acceleration = 0.5;
-
-    rocket = sprite(assets["images/spaceship.png"]);
-    rocket.width = 93 /  sizeCoef;
-    rocket.height = 50/sizeCoef;
-    rocket.accelerationX = acceleration;
-    rocket.accelerationY = acceleration;
-    rocket.frictionX = friction;
-    rocket.frictionY = friction;
-    rocket.mass = acceleration + (rocket.diameter / 32);
-    rocket.rotationSpeed = 0;
-    rocket.moveForward = false;
-    initFire(rocket);
-    stage.putCenter(rocket);
-    console.log(rocket)
-}
-
-function initFire(parent){
-    let scale = 1;
-    fire = sprite(assets["images/fire.png"]);
-    fire.width = 78 / sizeCoef;
-    fire.height = 39 / sizeCoef;
-    fire.x =  rocket.width * -1 + 25;
-    fire.y = 5;
-    scaleFire();
-    rocket.addChild(fire);
-}
-
-function scaleFire(scale = 1) {
-    fire.scaleX = scale;
-    fire.scaleY = scale;
-}
-
-function setEvents() {
-    let leftArrow = keyboard(37);
-    let upArrow = keyboard(38);
-    let rightArrow = keyboard(39);
-    let space = keyboard(32);
-    let rotateStep = 0.1;
-
-    leftArrow.press = () => rocket.rotationSpeed = rotateStep * -1;
-    leftArrow.release = () => {
-        if (!rightArrow.isDown) rocket.rotationSpeed = 0;
-    }
-    rightArrow.press = () => rocket.rotationSpeed = rotateStep;
-    rightArrow.release = () => {
-        if (!leftArrow.isDown) rocket.rotationSpeed = 0;
-    }
-    upArrow.press = () => rocket.moveForward = true;
-    upArrow.release = () => rocket.moveForward = false;
-
-    space.press = shotBullet;
-}
-
-function shotBullet() {
-    shoot(
-        rocket,
-        rocket.rotation,
-        50,
-        5,
-        bullets,
-        () => circle(randomInt(5, 10), 'yellow ')
-    );
-}
-
-function rocketFly() {
-    rocket.rotation += rocket.rotationSpeed;
-    scaleFire(randomFloat(0.6,0.99));
-
-    if (rocket.moveForward) {
-        rocket.vx += rocket.accelerationX * Math.cos(rocket.rotation);
-        rocket.vy += rocket.accelerationY * Math.sin(rocket.rotation);
-
-    } else {
-        rocket.vx *= rocket.frictionX;
-        rocket.vy *= rocket.frictionY;
-    }
-    rocket.x += rocket.vx;
-    rocket.y += rocket.vy;
-
-    contain(rocket, localBounds);
-    handleRocketHit();
-}
-
-function handleRocketHit() {
-    if (rocketHit) {
-        rocket.alpha = 0.5;
-        healthBar.children.pop();
-    } else {
-        rocket.alpha = 1;
-    }
-}
-
-function bulletsFly() {
-    bullets = bullets.filter(bullet => {
-        bullet.x += bullet.vx;
-        bullet.y += bullet.vy;
-
-        bulletHitWithAsteroid(bullet, asteroids)
-        let boundsContain = contain(bullet, localBounds);
-        if (boundsContain) {
-            remove(bullet);
-            return false;
-        }
-
-        return true;
-    });
-}
-
-function bulletHitWithAsteroid(bullet, asteroids) {
-    hit(bullet, asteroids, false, false, false,
-        (collision, asteroid) => {
-            destroyAsteroid(asteroid);
-            updateScore();
-        }
-    );
-}
 
 function updateScore() {
     score++;
@@ -287,7 +294,7 @@ function asteroidsFly() {
 }
 
 function play() {
-    rocketFly();
+    rocket.fly(() => healthBar.children.pop());
     bulletsFly();
     asteroidsFly();
 }
