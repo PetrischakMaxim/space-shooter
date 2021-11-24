@@ -1,18 +1,34 @@
-import {
-    game
-} from "./library/engine.js";
+import {game} from "./library/engine.js";
 
+let startScene, gameScene, titleMessage, asteroids, healthBar, rocket, playButton;
 let gameSize = 512;
+
+let fontFamily = "Ubuntu,Arial,sans-serif";
+let topOffset = 40;
+let fps = 30;
+let easing = ["decelerationCubed"];
+
+let colors = {
+    "dark": "#00000080",
+    "light": "#FFFFFF",
+    "primary": "#FFA500"
+}
 
 let g = game(
     gameSize, gameSize, setup,
     [
         "images/asteroid-1.png",
         "images/asteroid-2.png",
+        "images/asteroid-3.png",
         "images/heart.png",
         "images/spaceship.png",
         "images/main-bg.jpg",
         "images/fire.png",
+        "images/title.png",
+        "images/up.png",
+        "images/over.png",
+        "images/down.png",
+        "fonts/ubuntu.woff2"
     ],
     load
 );
@@ -34,24 +50,37 @@ const {
     randomInt,
     hit,
     shoot,
+    slide,
+    button,
     multipleCircleCollision,
     randomFloat
 } = g;
 
-let rocket, background, gameScene, bullets, asteroids, rocketHit, score, scoreMessage, healthBar;
-let font = "20px puzzler";
-
-let topOffset = 40;
 let localBounds = {x: 0, y: topOffset, width: stage.width, height: stage.height};
+
+let score = {
+    value: 0,
+    message: null,
+
+    init() {
+        this.message = text(`Score: ${this.value}`, `20px ${fontFamily}`, colors["primary"]);
+        this.message.x = 10;
+        this.message.y = 10;
+    },
+
+    update() {
+        this.value++;
+        this.message.content = `Score: ${this.value}`;
+    }
+};
 
 g.start();
 
 g.scaleToWindow();
 
 window.addEventListener("resize", () => {
-    g.scaleToWindow("#000");
+    g.scaleToWindow(colors["dark"]);
 });
-
 
 function load() {
     progressBar.create(canvas, assets);
@@ -60,27 +89,56 @@ function load() {
 
 function setup() {
     progressBar.remove();
+    let background = sprite(assets["images/main-bg.jpg"]);
+    // Start scene
+    let title = sprite(assets["images/title.png"]);
+    title.scaleX = 0.8;
+    title.scaleY = 0.8;
+    titleMessage = text("START GAME", `36px ${fontFamily}`, colors["light"]);
 
-    bullets = [];
-    asteroids = [];
-    background = sprite(assets["images/main-bg.jpg"]);
+    playButton = button([
+        assets["images/up.png"],
+        assets["images/over.png"],
+        assets["images/down.png"]
+    ]);
 
-    let topBar = rectangle(gameSize, topOffset, "white");
+    slide(titleMessage, (gameSize / 2 - playButton.halfWidth), title.height + 50, fps, easing);
+    slide(playButton, (gameSize / 2 - playButton.halfWidth), 350, fps, easing);
+    startScene = group(background, title, titleMessage, playButton,);
 
-    healthBar = initHealthBar();
+    playButton.press = () => {
+        //if (!music.playing) music.play();
+        g.state = play;
+        changeScene();
+    };
+
+    // g.state = play;
+}
+
+function changeScene() {
+    slide(startScene, gameSize, 0, fps, easing);
+    setupGameScene();
+    slide(gameScene, 0, 0, fps, easing);
+}
+
+function setupGameScene() {
+    let background = sprite(assets["images/main-bg.jpg"]);
+    let topBar = rectangle(gameSize, topOffset, colors["dark"]);
+
+    healthBar = generateHeathBar();
     topBar.addChild(healthBar);
 
-    initScore();
-    topBar.addChild(scoreMessage);
+    score.init();
+    topBar.addChild(score.message);
 
     rocket = initRocket();
     stage.putCenter(rocket);
-    gameScene = group(background, rocket, topBar);
 
-    generateAsteroids();
     setEvents(rocket, rocket.shotBullet);
 
-    g.state = play;
+    gameScene = group(background, rocket, topBar);
+    asteroids = generateAsteroids();
+    gameScene.x = gameSize * -1;
 }
 
 function initRocket() {
@@ -100,21 +158,11 @@ function initRocket() {
     rocket.mass = acceleration + (rocket.diameter / 32);
     rocket.rotationSpeed = 0;
     rocket.moveForward = false;
+    rocket.hit = false;
+    rocket.bullets = [];
+
     fire = setupFire();
     rocket.addChild(fire);
-
-    function setupFire() {
-        fire = sprite(assets["images/fire.png"]);
-        fire.width = 78 / coefficient;
-        fire.height = 39 / coefficient;
-        fire.x = rocket.width * -1 + 25;
-        fire.y = 5;
-        fire.burn = (scale = 1) => {
-            fire.scaleX = scale;
-            fire.scaleY = scale;
-        }
-        return fire;
-    }
 
     rocket.shotBullet = () => {
         shoot(
@@ -122,8 +170,8 @@ function initRocket() {
             rocket.rotation,
             50,
             5,
-            bullets,
-            () => circle(randomInt(5, 10), 'yellow')
+            rocket.bullets,
+            () => circle(randomInt(5, 10), colors["primary"])
         );
     }
 
@@ -152,16 +200,31 @@ function initRocket() {
         if (isHit()) {
             callback();
         }
+        rocket.hit = false;
     }
 
     function isHit() {
-        if (rocketHit) {
+        if (rocket.hit) {
             rocket.alpha = 0.5;
         } else {
             rocket.alpha = 1;
         }
-        return rocketHit;
+        return rocket.hit;
     }
+
+    function setupFire() {
+        fire = sprite(assets["images/fire.png"]);
+        fire.width = 78 / coefficient;
+        fire.height = 39 / coefficient;
+        fire.x = rocket.width * -1 + 25;
+        fire.y = 5;
+        fire.burn = (scale = 1) => {
+            fire.scaleX = scale;
+            fire.scaleY = scale;
+        }
+        return fire;
+    }
+
     return rocket;
 }
 
@@ -185,62 +248,12 @@ function setEvents(sprite, callback) {
     space.press = callback;
 }
 
-function bulletsFly() {
-    bullets = bullets.filter(bullet => {
-        bullet.x += bullet.vx;
-        bullet.y += bullet.vy;
-
-        bulletHitWithAsteroid(bullet, asteroids)
-        let boundsContain = contain(bullet, localBounds);
-        if (boundsContain) {
-            remove(bullet);
-            return false;
-        }
-
-        return true;
-    });
-}
-
-function bulletHitWithAsteroid(bullet, asteroids) {
-    hit(bullet, asteroids, false, false, false,
-        (collision, asteroid) => {
-            destroyAsteroid(asteroid);
-            updateScore();
-        }
-    );
-}
-
-function initHealthBar() {
-    let healthLifePoint = 5;
-    let healthSpriteSize = 20;
-    let healthBarWidth = healthLifePoint * healthSpriteSize + healthLifePoint;
-    let healthRect = rectangle(healthBarWidth, healthSpriteSize, "transparent");
-    healthRect.y = healthSpriteSize / 2;
-    healthRect.x = gameSize - healthBarWidth - healthSpriteSize / 2;
-
-    for (let i = 0; i < healthLifePoint; i++) {
-        let healthSprite = sprite(assets["images/heart.png"]);
-        healthSprite.width = healthSpriteSize;
-        healthSprite.height = healthSpriteSize;
-        healthSprite.x = i * healthSpriteSize + i;
-        healthSprite.y = 0;
-        healthRect.addChild(healthSprite);
-    }
-    return healthRect;
-}
-
-function initScore() {
-    score = 0;
-    scoreMessage = text(`Score: ${score}`, font, "purple");
-    scoreMessage.x = 10;
-    scoreMessage.y = 10;
-}
-
 function generateAsteroids() {
+    let asteroids = [];
     let numberOfAsteroids = randomInt(3, 5);
 
     for (let i = 0; i < numberOfAsteroids; i++) {
-        let asteroid = sprite(assets[`images/asteroid-${randomInt(1, 2)}.png`]);
+        let asteroid = sprite(assets[`images/asteroid-${randomInt(1, 3)}.png`]);
         let x = randomInt(0, canvas.width);
         let y = randomInt(topOffset, canvas.height);
         asteroid.width = randomInt(15, 50);
@@ -256,12 +269,52 @@ function generateAsteroids() {
         asteroids.push(asteroid);
         gameScene.addChild(asteroid);
     }
+    return asteroids;
 }
 
+function generateHeathBar() {
+    let healthLifePoint = 5;
+    let healthSpriteSize = 20;
+    let healthBarWidth = healthLifePoint * healthSpriteSize + healthLifePoint;
+    let healthRect = rectangle(healthBarWidth, healthSpriteSize, "transparent");
+    healthRect.y = healthSpriteSize / 2;
+    healthRect.x = gameSize - healthBarWidth - healthSpriteSize / 2;
 
-function updateScore() {
-    score++;
-    scoreMessage.content = `Score: ${score}`;
+    for (let i = 0; i < healthLifePoint; i++) {
+        let healthSprite = sprite(assets["images/heart.png"]);
+        healthSprite.width = healthSpriteSize;
+        healthSprite.height = healthSpriteSize;
+        healthSprite.x = i * healthSpriteSize + i;
+        healthSprite.y = 0;
+        healthRect.addChild(healthSprite);
+    }
+
+    return healthRect;
+}
+
+function hitBulletWithAsteroid(bullet, asteroids) {
+    hit(bullet, asteroids, false, false, false,
+        (collision, asteroid) => {
+            destroyAsteroid(asteroid);
+            score.update();
+        }
+    );
+}
+
+function bulletsFly() {
+    rocket.bullets = rocket.bullets.filter(bullet => {
+        bullet.x += bullet.vx;
+        bullet.y += bullet.vy;
+
+        hitBulletWithAsteroid(bullet, asteroids);
+        let boundsContain = contain(bullet, localBounds);
+        if (boundsContain) {
+            remove(bullet);
+            return false;
+        }
+
+        return true;
+    });
 }
 
 function destroyAsteroid(asteroid) {
@@ -270,13 +323,12 @@ function destroyAsteroid(asteroid) {
     remove(asteroid);
 }
 
-function asteroidsFly() {
-    rocketHit = false;
-
+function asteroidsFly(sprite, callback) {
     multipleCircleCollision(asteroids);
     asteroids.forEach(asteroid => {
         asteroid.x += asteroid.vx;
         asteroid.y += asteroid.vy;
+        asteroid.rotation += 0.01;
 
         let hitEdge = contain(asteroid, localBounds, true);
         if (hitEdge === "top" || hitEdge === "bottom") {
@@ -286,8 +338,8 @@ function asteroidsFly() {
             asteroid.vx *= asteroid.frictionX;
         }
 
-        if (hit(rocket, asteroid, true, true, false)) {
-            rocketHit = true;
+        if (hit(sprite, asteroid, true, true, false)) {
+            callback();
             destroyAsteroid(asteroid);
         }
     });
@@ -295,6 +347,6 @@ function asteroidsFly() {
 
 function play() {
     rocket.fly(() => healthBar.children.pop());
+    asteroidsFly(rocket, () => rocket.hit = true);
     bulletsFly();
-    asteroidsFly();
 }

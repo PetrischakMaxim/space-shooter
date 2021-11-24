@@ -47,7 +47,7 @@ export let assets = {
 
     //File extensions for different types of assets
     imageExtensions: ["png", "jpg", "gif"],
-    fontExtensions: ["ttf", "otf", "ttc", "woff"],
+    fontExtensions: ["ttf", "otf", "ttc", "woff","woff2"],
     jsonExtensions: ["json"],
     audioExtensions: ["mp3", "ogg", "wav", "webm"],
 
