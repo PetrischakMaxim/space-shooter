@@ -638,4 +638,3 @@ export function move(...sprites) {
         }
     }
 }
-
