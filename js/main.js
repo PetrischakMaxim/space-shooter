@@ -1,39 +1,45 @@
-import {game} from "./library/engine.js";
+import {
+    game
+} from "./library/engine.js";
 
-let startScene, gameScene, titleMessage, asteroids, healthBar, rocket, playButton;
 let gameSize = 512;
-
 let fontFamily = "Ubuntu,Arial,sans-serif";
 let topOffset = 40;
 let fps = 30;
 let easing = ["decelerationCubed"];
-
 let colors = {
     "dark": "#00000080",
     "light": "#FFFFFF",
     "primary": "#FFA500"
-}
-
+};
+let messages = {
+    start: "START GAME!",
+    end: "GAME OVER!",
+    win: "YOU WIN!"
+};
 let g = game(
     gameSize, gameSize, setup,
     [
-        "images/asteroid-1.png",
-        "images/asteroid-2.png",
-        "images/asteroid-3.png",
-        "images/heart.png",
-        "images/spaceship.png",
-        "images/main-bg.jpg",
-        "images/fire.png",
-        "images/title.png",
-        "images/up.png",
-        "images/over.png",
-        "images/down.png",
-        "fonts/ubuntu.woff2"
+        "assets/images/asteroid-1.png",
+        "assets/images/asteroid-2.png",
+        "assets/images/asteroid-3.png",
+        "assets/images/asteroid-4.png",
+        "assets/images/asteroid-5.png",
+        "assets/images/heart.png",
+        "assets/images/rocket.png",
+        "assets/images/main-bg.jpg",
+        "assets/images/fire.png",
+        "assets/images/title.png",
+        "assets/images/up.png",
+        "assets/images/over.png",
+        "assets/images/down.png",
+        "assets/fonts/ubuntu.woff2",
+        "assets/sounds/theme.mp3",
+        "assets/sounds/fly.wav"
     ],
     load
 );
 
-//Game variables
 const {
     canvas,
     rectangle,
@@ -43,20 +49,20 @@ const {
     sprite,
     keyboard,
     stage,
-    circle,
     group,
     remove,
     contain,
     randomInt,
     hit,
-    shoot,
-    slide,
-    button,
-    multipleCircleCollision,
-    randomFloat
+    slide
 } = g;
 
-let localBounds = {x: 0, y: topOffset, width: stage.width, height: stage.height};
+let localBounds = {
+    x: 0,
+    y: topOffset,
+    width: stage.width,
+    height: stage.height
+};
 
 let score = {
     value: 0,
@@ -71,8 +77,11 @@ let score = {
     update() {
         this.value++;
         this.message.content = `Score: ${this.value}`;
-    }
+    },
 };
+
+//Game variables
+let startScene, mainScene, endScene, asteroids, rocket, healthBar, background;
 
 g.start();
 
@@ -89,68 +98,85 @@ function load() {
 
 function setup() {
     progressBar.remove();
-    let background = sprite(assets["images/main-bg.jpg"]);
-    // Start scene
-    let title = sprite(assets["images/title.png"]);
-    title.scaleX = 0.8;
-    title.scaleY = 0.8;
-    titleMessage = text("START GAME", `36px ${fontFamily}`, colors["light"]);
-
-    playButton = button([
-        assets["images/up.png"],
-        assets["images/over.png"],
-        assets["images/down.png"]
-    ]);
-
-    slide(titleMessage, (gameSize / 2 - playButton.halfWidth), title.height + 50, fps, easing);
-    slide(playButton, (gameSize / 2 - playButton.halfWidth), 350, fps, easing);
-    startScene = group(background, title, titleMessage, playButton,);
-
-    playButton.press = () => {
-        //if (!music.playing) music.play();
-        g.state = play;
-        changeScene();
-    };
-
-    // g.state = play;
+    initStartScene();
 }
 
 function changeScene() {
     slide(startScene, gameSize, 0, fps, easing);
-    setupGameScene();
-    slide(gameScene, 0, 0, fps, easing);
+    initMainScene();
+    slide(mainScene, 0, 0, fps, easing);
 }
 
-function setupGameScene() {
-    let background = sprite(assets["images/main-bg.jpg"]);
+function initStartScene() {
+    background = sprite(assets["assets/images/main-bg.jpg"]);
+    let music = g.assets["assets/sounds/theme.mp3"];
+    let logo = sprite(assets["assets/images/title.png"], 0, topOffset);
+    logo.scaleX = 0.8;
+    logo.scaleY = 0.8;
+
+    let titleOffset = topOffset * 2 + logo.height;
+    let title = text(messages["start"], `36px ${fontFamily}`, colors["light"], titleOffset, titleOffset);
+
+    let buttonOffset = titleOffset * 1.2;
+    let startButton = g.button([
+        assets["assets/images/up.png"],
+        assets["assets/images/over.png"],
+        assets["assets/images/down.png"]
+    ], buttonOffset * -1, buttonOffset);
+    let buttonXOffset = gameSize / 2 - startButton.halfWidth;
+
+    slide(title, (buttonXOffset), titleOffset, fps, easing);
+    slide(startButton, (buttonXOffset), buttonOffset, fps, easing);
+    startScene = group(background, logo, title, startButton);
+
+    startButton.press = () => {
+        if (!music.playing) music.play();
+        g.state = play;
+        changeScene();
+    };
+}
+
+function initMainScene() {
     let topBar = rectangle(gameSize, topOffset, colors["dark"]);
 
-    healthBar = generateHeathBar();
+    healthBar = createHeathBar();
     topBar.addChild(healthBar);
 
     score.init();
     topBar.addChild(score.message);
 
     rocket = initRocket();
-    stage.putCenter(rocket);
+    stage.putTop(rocket);
 
-    setEvents(rocket, rocket.shotBullet);
+    setEvents(rocket, rocket.shootBullet);
 
-    gameScene = group(background, rocket, topBar);
+    mainScene = group(background, rocket, topBar);
     asteroids = generateAsteroids();
-    gameScene.x = gameSize * -1;
+}
+
+function initEndScene(message) {
+    let title = text(message, `36px ${fontFamily}`, colors["light"], 150, 150);
+    let finalScore = score.message;
+    finalScore.content = `YOUR SCORE IS ${score.value}`;
+    finalScore.x = 150;
+    finalScore.y = 200;
+
+    endScene = group(background, title, finalScore);
+
+    slide(mainScene, gameSize, 0, fps, easing);
+    slide(endScene, 0, 0, fps, easing);
 }
 
 function initRocket() {
-    let friction = 0.9;
-    let acceleration = 0.5;
+    let friction = 0.85;
+    let acceleration = 0.15;
     let rotateStep = 0.05;
     let coefficient = 1.25;
     let fire = null;
 
-    rocket = sprite(assets["images/spaceship.png"]);
-    rocket.width = 93 / coefficient;
-    rocket.height = 50 / coefficient;
+    rocket = sprite(assets["assets/images/rocket.png"]);
+    rocket.width = 100 / coefficient;
+    rocket.height = 60 / coefficient;
     rocket.accelerationX = acceleration;
     rocket.accelerationY = acceleration;
     rocket.frictionX = friction;
@@ -159,26 +185,35 @@ function initRocket() {
     rocket.rotationSpeed = 0;
     rocket.moveForward = false;
     rocket.hit = false;
+    rocket.immortal = false;
+    rocket.sound = g.assets["assets/sounds/fly.wav"];
     rocket.bullets = [];
 
     fire = setupFire();
     rocket.addChild(fire);
-
-    rocket.shotBullet = () => {
-        shoot(
+    rocket.shootBullet = () => {
+        g.shoot(
             rocket,
             rocket.rotation,
             50,
             5,
             rocket.bullets,
-            () => circle(randomInt(5, 10), colors["primary"])
+            rocket.shoot,
         );
+        shootSound();
     }
+
+    rocket.shoot = () => g.circle(randomInt(5, 10), colors["primary"]);
 
     rocket.turnLeft = () => rocket.rotationSpeed = rotateStep * -1;
     rocket.turnRight = () => rocket.rotationSpeed = rotateStep;
     rocket.stop = () => rocket.rotationSpeed = 0;
-    rocket.toggleMovement = (flag) => rocket.moveForward = flag;
+    rocket.toggleMovement = (flag) => {
+        rocket.moveForward = flag
+        if (flag) {
+            rocket.sound.play();
+        }
+    };
 
     rocket.startMovement = () => {
         rocket.rotation += rocket.rotationSpeed;
@@ -194,7 +229,7 @@ function initRocket() {
     }
 
     rocket.fly = (callback) => {
-        fire.burn(randomFloat(0.6, 0.99));
+        fire.burn(g.randomFloat(0.6, 0.99));
         rocket.startMovement();
         contain(rocket, localBounds);
         if (isHit()) {
@@ -213,7 +248,7 @@ function initRocket() {
     }
 
     function setupFire() {
-        fire = sprite(assets["images/fire.png"]);
+        fire = sprite(assets["assets/images/fire.png"]);
         fire.width = 78 / coefficient;
         fire.height = 39 / coefficient;
         fire.x = rocket.width * -1 + 25;
@@ -248,32 +283,36 @@ function setEvents(sprite, callback) {
     space.press = callback;
 }
 
-function generateAsteroids() {
+function generateAsteroids(count = randomInt(6, 10)) {
     let asteroids = [];
-    let numberOfAsteroids = randomInt(3, 5);
+    let numberOfAsteroids = count;
 
     for (let i = 0; i < numberOfAsteroids; i++) {
-        let asteroid = sprite(assets[`images/asteroid-${randomInt(1, 3)}.png`]);
-        let x = randomInt(0, canvas.width);
-        let y = randomInt(topOffset, canvas.height);
-        asteroid.width = randomInt(15, 50);
-        asteroid.height = randomInt(15, 50);
+        let asteroid = sprite(assets[`assets/images/asteroid-${randomInt(1, 5)}.png`]);
+        let x = randomInt(0, canvas.width - topOffset);
+        let y = randomInt(topOffset + rocket.height, canvas.height);
+        let friction = 0.85;
+        let velocity = randomInt(-3, 3);
+        let size = randomInt(15, 40);
+
+        asteroid.width = size;
+        asteroid.height = size;
         asteroid.circular = true;
         asteroid.x = x;
         asteroid.y = y;
-        asteroid.vx = randomInt(-10, 10);
-        asteroid.vy = randomInt(-10, 10);
-        asteroid.frictionX = 0.99;
-        asteroid.frictionY = 0.99;
+        asteroid.vx = velocity;
+        asteroid.vy = velocity;
+        asteroid.frictionX = friction;
+        asteroid.frictionY = friction;
         asteroid.mass = 0.5 + (asteroid.diameter / 32);
         asteroids.push(asteroid);
-        gameScene.addChild(asteroid);
+        mainScene.addChild(asteroid);
     }
     return asteroids;
 }
 
-function generateHeathBar() {
-    let healthLifePoint = 5;
+function createHeathBar(point = 5) {
+    let healthLifePoint = point;
     let healthSpriteSize = 20;
     let healthBarWidth = healthLifePoint * healthSpriteSize + healthLifePoint;
     let healthRect = rectangle(healthBarWidth, healthSpriteSize, "transparent");
@@ -281,7 +320,7 @@ function generateHeathBar() {
     healthRect.x = gameSize - healthBarWidth - healthSpriteSize / 2;
 
     for (let i = 0; i < healthLifePoint; i++) {
-        let healthSprite = sprite(assets["images/heart.png"]);
+        let healthSprite = sprite(assets["assets/images/heart.png"]);
         healthSprite.width = healthSpriteSize;
         healthSprite.height = healthSpriteSize;
         healthSprite.x = i * healthSpriteSize + i;
@@ -297,6 +336,7 @@ function hitBulletWithAsteroid(bullet, asteroids) {
         (collision, asteroid) => {
             destroyAsteroid(asteroid);
             score.update();
+            remove(bullet);
         }
     );
 }
@@ -307,11 +347,12 @@ function bulletsFly() {
         bullet.y += bullet.vy;
 
         hitBulletWithAsteroid(bullet, asteroids);
-        let boundsContain = contain(bullet, localBounds);
-        if (boundsContain) {
-            remove(bullet);
+
+        if (contain(bullet, localBounds)) {
+            bullet.alpha = 0;
             return false;
         }
+
 
         return true;
     });
@@ -321,10 +362,12 @@ function destroyAsteroid(asteroid) {
     let hitAsteroid = asteroids.indexOf(asteroid);
     asteroids.splice(hitAsteroid, 1);
     remove(asteroid);
+    destroySound();
 }
 
-function asteroidsFly(sprite, callback) {
-    multipleCircleCollision(asteroids);
+function asteroidsFly(target, callback) {
+    g.multipleCircleCollision(asteroids);
+
     asteroids.forEach(asteroid => {
         asteroid.x += asteroid.vx;
         asteroid.y += asteroid.vy;
@@ -334,19 +377,78 @@ function asteroidsFly(sprite, callback) {
         if (hitEdge === "top" || hitEdge === "bottom") {
             asteroid.vy *= asteroid.frictionY;
         }
+
         if (hitEdge === "left" || hitEdge === "right") {
             asteroid.vx *= asteroid.frictionX;
         }
 
-        if (hit(sprite, asteroid, true, true, false)) {
+        if (hit(target, asteroid, true, true, false)) {
             callback();
-            destroyAsteroid(asteroid);
+            if (!target.immortal) {
+                destroyAsteroid(asteroid);
+            }
         }
     });
 }
 
 function play() {
-    rocket.fly(() => healthBar.children.pop());
-    asteroidsFly(rocket, () => rocket.hit = true);
+
+    rocket.fly(() => {
+        if (healthBar.children.length === 1) {
+            end(messages["end"]);
+        }
+        healthBar.children.pop();
+    });
+
     bulletsFly();
+    asteroidsFly(rocket, () => {
+        if (!rocket.immortal) {
+            rocket.hit = true
+        }
+    });
+
+    if (!asteroids.length) {
+        end(messages["win"])
+    }
+}
+
+function end(message) {
+    g.paused = true;
+    initEndScene(message);
+    g.wait(1500).then(() => location.reload());
+}
+
+function shootSound() {
+    g.soundEffect(
+        880, //frequency
+        0, //attack
+        0.5, //decay
+        "sawtooth", //waveform
+        1, //Volume
+        -0.8, //pan
+        0, //wait before playing
+        1500, //frequency bend amount
+        false, //reverse bend
+        0, //random frequency range
+        10, //dissonance
+        [0.2, 0.2, 1000], //echo array: [delay, feedback, filter]
+        undefined //reverb array: [duration, decay, reverse?]
+    );
+}
+
+function destroySound() {
+    g.soundEffect(
+        16, //frequency
+        0, //attack
+        1, //decay
+        "sawtooth", //waveform
+        1, //volume
+        0, //pan
+        0, //wait before playing
+        0, //frequency bend amount
+        false, //reverse
+        0, //random frequency range
+        50, //dissonance
+        undefined //echo: [delay, feedback, filter]
+    );
 }
