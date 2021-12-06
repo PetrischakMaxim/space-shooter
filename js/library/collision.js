@@ -492,17 +492,6 @@ export function rectangleCollision(
                 //Bounce
                 if (bounce) {
                     r1.vy *= -1;
-
-                    /*Alternative
-                    //Find the bounce surface's vx and vy properties
-                    var s = {};
-                    s.vx = r2.x - r2.x + r2.width;
-                    s.vy = 0;
-
-                    //Bounce r1 off the surface
-                    //bounceOffSurface(r1, s);
-                    */
-
                 }
             } else {
                 //The collision is happening on the Y axis
@@ -521,17 +510,6 @@ export function rectangleCollision(
                 //Bounce
                 if (bounce) {
                     r1.vx *= -1;
-
-                    /*Alternative
-                    //Find the bounce surface's vx and vy properties
-                    var s = {};
-                    s.vx = 0;
-                    s.vy = r2.y - r2.y + r2.height;
-
-                    //Bounce r1 off the surface
-                    bounceOffSurface(r1, s);
-                    */
-
                 }
             }
         } else {

@@ -7,13 +7,6 @@ creating and rendering canvas based sprites.
 
 */
 
-//Dependencies
-//requestAnimationFrame polyfill
-//import "../library/plugins/rAF";
-//`hitTestPoint` needed for the Button class's `update` method
-//import {hitTestPoint} from "../library/collision"
-
-
 /*
 DisplayObject
 ------
@@ -631,7 +624,7 @@ Text
 A Text class
 */
 
-class Text extends DisplayObject {
+export default class Text extends DisplayObject {
     constructor(
         content = "Hello!",
         font = "12px sans-serif",
@@ -826,7 +819,7 @@ Sprite
 A Sprite class to make sprites from images
 */
 
-class Sprite extends DisplayObject {
+export class Sprite extends DisplayObject {
     constructor(
         source,
         x = 0,
@@ -1691,7 +1684,7 @@ sprites with more than one frame. Its called automatically when
 
 */
 
-function addStatePlayer(sprite) {
+export function addStatePlayer(sprite) {
     let frameCounter = 0,
         numberOfFrames = 0,
         startFrame = 0,

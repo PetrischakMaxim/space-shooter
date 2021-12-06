@@ -222,20 +222,6 @@ export class Game {
         //This is important for correct hit testing between the pointer and sprites
         this.pointer.scale = scale;
         this.scale = scale;
-
-        //Fix some quirkiness in scaling for Safari
-        /*
-        let ua = navigator.userAgent.toLowerCase();
-        if (ua.indexOf('safari') != -1) {
-          if (ua.indexOf('chrome') > -1) {
-            // Chrome
-          } else {
-            // Safari
-            this.canvas.style.maxHeight = "100%";
-            this.canvas.style.minHeight = "100%";
-          }
-        }
-        */
     }
 }
 
