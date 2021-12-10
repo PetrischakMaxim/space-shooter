@@ -1,8 +1,9 @@
-import {Game} from "./library/engine.js";
-import {destroySound} from "./modules/sounds.js";
+import Game from "./library/engine.js";
 import Score from "./modules/score.js";
+import Asteroids from "./modules/asteroids.js";
+import Rocket from "./modules/rocket.js";
+import HealthBar from "./modules/healthBar.js";
 import {gameSize, fontFamily, topOffset, fps, easing, colors, messages, assetsToLoad} from "./modules/constants.js"
-import {Rocket} from "./modules/rocket.js";
 
 const game = new Game(gameSize, gameSize, setup, assetsToLoad, load);
 
@@ -16,7 +17,6 @@ const {
     stage,
     group,
     remove,
-    contain,
     randomInt,
     hit,
     slide
@@ -30,10 +30,11 @@ const localBounds = {
 };
 
 const score = new Score();
-
+const healthBar = new HealthBar();
+const asteroids = new Asteroids(localBounds);
 
 //Game variables
-let startScene, mainScene, endScene, asteroids, rocket, healthBar, background;
+let startScene, mainScene, endScene, rocket;
 
 game.start();
 
@@ -53,15 +54,8 @@ function setup() {
     initStartScene();
 }
 
-function changeScene() {
-    slide(startScene, gameSize, 0, fps, easing);
-    initMainScene();
-    slide(mainScene, 0, 0, fps, easing);
-}
-
 function initStartScene() {
-    background = sprite(assets["assets/images/main-bg.jpg"]);
-    let music = game.assets["assets/sounds/theme.mp3"];
+    let music = assets["assets/sounds/theme.mp3"];
     let logo = sprite(assets["assets/images/title.png"], 0, topOffset);
     logo.scaleX = 0.8;
     logo.scaleY = 0.8;
@@ -79,29 +73,44 @@ function initStartScene() {
 
     slide(title, (buttonXOffset), titleOffset, fps, easing);
     slide(startButton, (buttonXOffset), buttonOffset, fps, easing);
-    startScene = group(background, logo, title, startButton);
+    startScene = group(logo, title, startButton);
 
     startButton.press = () => {
         if (!music.playing) music.play();
         game.state = play;
-        changeScene();
+        startScene.visible = false;
+        initMainScene();
     };
 }
 
 function initMainScene() {
-    let topBar = rectangle(gameSize, topOffset, colors["dark"]);
+    const topBar = rectangle(gameSize, topOffset, colors["dark"]);
 
-    healthBar = createHeathBar();
+    healthBar.addSprite(topBar, assets["assets/images/heart.png"]);
     topBar.addChild(healthBar);
 
     score.init();
     topBar.addChild(score.message);
 
-    rocket = new Rocket(assets["assets/images/rocket.png"], assets["assets/images/fire.png"], assets["assets/sounds/fly.wav"], localBounds);
+    rocket = new Rocket(
+        assets["assets/images/rocket.png"],
+        assets["assets/images/fire.png"],
+        assets["assets/sounds/fly.wav"],
+        localBounds
+    );
+
     stage.putTop(rocket);
 
-    mainScene = group(background, rocket, topBar);
-    asteroids = generateAsteroids();
+    mainScene = group(rocket, topBar);
+
+    asteroids.generate(
+        randomInt(6, 10),
+        mainScene,
+        0,
+        canvas.width - topOffset,
+        topOffset + rocket.height,
+        canvas.height,
+    )
 }
 
 function initEndScene(message) {
@@ -111,135 +120,39 @@ function initEndScene(message) {
     finalScore.x = 150;
     finalScore.y = 200;
 
-    endScene = group(background, title, finalScore);
-
-    slide(mainScene, gameSize, 0, fps, easing);
-    slide(endScene, 0, 0, fps, easing);
-}
-
-function generateAsteroids(count = randomInt(6, 10)) {
-    let asteroids = [];
-
-    for (let i = 0; i < count; i++) {
-        let asteroid = sprite(assets[`assets/images/asteroid-${randomInt(1, 5)}.png`]);
-        let x = randomInt(0, canvas.width - topOffset);
-        let y = randomInt(topOffset + rocket.height, canvas.height);
-        let friction = 0.85;
-        let velocity = randomInt(-3, 3);
-        let size = randomInt(15, 40);
-
-        asteroid.width = size;
-        asteroid.height = size;
-        asteroid.circular = true;
-        asteroid.x = x;
-        asteroid.y = y;
-        asteroid.vx = velocity;
-        asteroid.vy = velocity;
-        asteroid.frictionX = friction;
-        asteroid.frictionY = friction;
-        asteroid.mass = 0.5 + (asteroid.diameter / 32);
-        asteroids.push(asteroid);
-        mainScene.addChild(asteroid);
-    }
-    return asteroids;
-}
-
-function createHeathBar(point = 5) {
-    let healthSpriteSize = 20;
-    let healthBarWidth = point * healthSpriteSize + point;
-    let healthRect = rectangle(healthBarWidth, healthSpriteSize, "transparent");
-    healthRect.y = healthSpriteSize / 2;
-    healthRect.x = gameSize - healthBarWidth - healthSpriteSize / 2;
-
-    for (let i = 0; i < point; i++) {
-        let healthSprite = sprite(assets["assets/images/heart.png"]);
-        healthSprite.width = healthSpriteSize;
-        healthSprite.height = healthSpriteSize;
-        healthSprite.x = i * healthSpriteSize + i;
-        healthSprite.y = 0;
-        healthRect.addChild(healthSprite);
-    }
-
-    return healthRect;
+    endScene = group(title, finalScore);
+    mainScene.visible = false;
 }
 
 function hitBulletWithAsteroid(bullet, asteroids) {
     hit(bullet, asteroids, false, false, false,
         (collision, asteroid) => {
-            destroyAsteroid(asteroid);
+            asteroids.destroy(asteroid);
             score.update();
             remove(bullet);
         }
     );
 }
 
-function bulletsFly() {
-    rocket.bullets = rocket.bullets.filter(bullet => {
-        bullet.x += bullet.vx;
-        bullet.y += bullet.vy;
-
-        hitBulletWithAsteroid(bullet, asteroids);
-
-        if (contain(bullet, localBounds)) {
-            bullet.alpha = 0;
-            return false;
-        }
-
-
-        return true;
-    });
-}
-
-function destroyAsteroid(asteroid) {
-    let hitAsteroid = asteroids.indexOf(asteroid);
-    asteroids.splice(hitAsteroid, 1);
-    remove(asteroid);
-    destroySound();
-}
-
-function asteroidsFly(target, callback) {
-    game.multipleCircleCollision(asteroids);
-
-    asteroids.forEach(asteroid => {
-        asteroid.x += asteroid.vx;
-        asteroid.y += asteroid.vy;
-        asteroid.rotation += 0.01;
-
-        let hitEdge = contain(asteroid, localBounds, true);
-        if (hitEdge === "top" || hitEdge === "bottom") {
-            asteroid.vy *= asteroid.frictionY;
-        }
-
-        if (hitEdge === "left" || hitEdge === "right") {
-            asteroid.vx *= asteroid.frictionX;
-        }
-
-        if (hit(target, asteroid, true, true, false)) {
-            callback();
-            if (!target.immortal) {
-                destroyAsteroid(asteroid);
-            }
-        }
-    });
-}
-
 function play() {
 
-    rocket.fly(() => {
-        if (healthBar.children.length === 1) {
-            end(messages["end"]);
-        }
-        healthBar.children.pop();
-    });
+    rocket.fly(() =>
+        healthBar.checkPoints(() =>
+            end(messages['end'])
+        ),
+    );
 
-    bulletsFly();
-    asteroidsFly(rocket, () => {
-        if (!rocket.immortal) {
+    rocket.bulletsFly(
+        hitBulletWithAsteroid,
+        asteroids.elements
+    );
+
+    asteroids.fly(rocket, () => {
             rocket.hit = true
         }
-    });
+    )
 
-    if (!asteroids.length) {
+    if (!asteroids.elements.length) {
         end(messages["win"])
     }
 }

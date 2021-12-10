@@ -23,7 +23,6 @@ const assetsToLoad = [
     "assets/images/asteroid-5.png",
     "assets/images/heart.png",
     "assets/images/rocket.png",
-    "assets/images/main-bg.jpg",
     "assets/images/fire.png",
     "assets/images/title.png",
     "assets/images/up.png",

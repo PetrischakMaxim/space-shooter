@@ -449,7 +449,7 @@ Rectangle
 A Rectangle class
 */
 
-class Rectangle extends DisplayObject {
+export class Rectangle extends DisplayObject {
     constructor(
         width = 32,
         height = 32,

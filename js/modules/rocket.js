@@ -6,8 +6,7 @@ import {colors} from "./constants.js";
 import {shootSound} from "./sounds.js";
 
 
-export class Rocket extends Sprite {
-    _ratio = 2;
+export default class Rocket extends Sprite {
 
     constructor(source, fireSource, soundSource, bounds) {
         super(source);
@@ -16,20 +15,18 @@ export class Rocket extends Sprite {
         this.rotationSpeed = 0;
         this.friction = 0.97;
         this.acceleration = 0.35;
-
-        this.width = 186 / this._ratio;
-        this.height = 95 / this._ratio;
+        this.ratio = 2;
+        this.width = 186 / this.ratio;
+        this.height = 95 / this.ratio;
         this.accelerationX = this.acceleration;
         this.accelerationY = this.acceleration;
         this.frictionX = this.friction;
         this.frictionY = this.friction;
         this.rotationSpeed = 0;
-        this.moveForward = false;
+        this.flyForward = false;
         this.hit = false;
-        this.immortal = false;
         this.sound = soundSource;
         this.fire = new Fire(fireSource, this);
-        this.firePower = 0;
         this.bullets = [];
         this.controls = {
             left: keyboard(37),
@@ -51,8 +48,8 @@ export class Rocket extends Sprite {
         right.release = () => {
             if (!left.isDown) this.stop();
         }
-        up.press = () => this.toggleMovement(true);
-        up.release = () => this.toggleMovement(false);
+        up.press = () => this.toggleFlight(true);
+        up.release = () => this.toggleFlight(false);
         space.press = () => this.shootBullet();
     }
 
@@ -68,30 +65,30 @@ export class Rocket extends Sprite {
         this.rotationSpeed = 0;
     }
 
-    toggleMovement(flag) {
-        this.moveForward = flag;
-        if (flag) {
+    toggleFlight(flag) {
+        this.flyForward = flag;
+        if (this.flyForward) {
             this.sound.play();
         }
     }
 
-    startMovement() {
+    updateFlight() {
         this.rotation += this.rotationSpeed;
-        if (this.moveForward) {
+        if (this.flyForward) {
             this.vx += this.accelerationX * Math.cos(this.rotation);
             this.vy += this.accelerationY * Math.sin(this.rotation);
+            this.fire.burn(randomFloat(0.8, 1.5));
         } else {
             this.vx *= this.frictionX;
             this.vy *= this.frictionY;
+            this.fire.burn(randomFloat(0.4, 0.7));
         }
         this.x += this.vx;
         this.y += this.vy;
     }
 
     fly(callback) {
-        this.fire.burn(1);
-
-        this.startMovement();
+        this.updateFlight();
         contain(this, this.bounds);
 
         if (this.isHit()) {
@@ -112,8 +109,22 @@ export class Rocket extends Sprite {
         shootSound();
     }
 
-    shoot = () => {
-        return circle(5, colors["primary"]);
+    shoot = () => circle(5, colors["primary"]);
+
+    bulletsFly(callback, asteroids) {
+        this.bullets = this.bullets.filter(bullet => {
+            bullet.x += bullet.vx;
+            bullet.y += bullet.vy;
+
+            callback(bullet, asteroids);
+
+            if (contain(bullet, this.bounds)) {
+                bullet.alpha = 0;
+                return false;
+            }
+
+            return true;
+        });
     }
 
     isHit() {
@@ -125,4 +136,3 @@ export class Rocket extends Sprite {
         return this.hit;
     }
 }
-

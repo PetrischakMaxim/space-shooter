@@ -22,7 +22,7 @@ import * as
     from
         "./tween.js";
 
-export class Game {
+export default class Game {
     constructor(width = 256, height = 256, setup, assetsToLoad, load) {
         //Copy all the imported library code into
         //properties on this class
