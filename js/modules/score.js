@@ -1,15 +1,11 @@
-import {colors, fontFamily} from "./constants.js";
+import {Color, fontFamily} from "./constants.js";
 import Text from "../library/display.js"
 
 export default class Score {
 
     constructor() {
-        this.init();
-    }
-
-    init() {
         this.value = 0;
-        this.message = new Text(`Score: ${this.value}`, `20px ${fontFamily}`, colors["primary"]);
+        this.message = new Text(`Score: ${this.value}`, `20px ${fontFamily}`, Color.Primary);
         this.message.x = 10;
         this.message.y = 10;
     }

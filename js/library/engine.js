@@ -1,46 +1,24 @@
-import * as utilities
-    from
-        "./utilities.js";
-import * as
-        display
-    from
-        "./display.js";
-import * as
-        collision
-    from
-        "./collision.js";
-import * as
-        interactive
-    from
-        "./interactive.js";
-import * as
-        sound
-    from
-        "./sound.js";
-import * as
-        tween
-    from
-        "./tween.js";
+import * as utilities from "./utilities.js";
+import * as display from "./display.js";
+import * as tween from  "./tween.js";
+import {makePointer} from "./interactive.js";
 
 export default class Game {
     constructor(width = 256, height = 256, setup, assetsToLoad, load) {
-        //Copy all the imported library code into
-        //properties on this class
+
         Object.assign(this, utilities);
         Object.assign(this, display);
-        Object.assign(this, collision);
-        Object.assign(this, interactive);
-        Object.assign(this, sound);
         Object.assign(this, tween);
 
         //Make the canvas and initialize the stage
         this.canvas = this.makeCanvas(width, height, "none");
+
         this.canvas.style.backgroundColor = "white";
         this.stage.width = this.canvas.width;
         this.stage.height = this.canvas.height;
 
         //Make the pointer
-        this.pointer = this.makePointer(this.canvas);
+        this.pointer = makePointer(this.canvas);
 
         //The game's scale
         this.scale = 1;
@@ -84,33 +62,12 @@ export default class Game {
             });
         }
 
-        //Update all the particles
-        if (this.particles.length > 0) {
-            for (let i = this.particles.length - 1; i >= 0; i--) {
-                let particle = this.particles[i];
-                particle.update();
-            }
-        }
-
         //Update all the tweens
         if (this.tweens.length > 0) {
             for (let i = this.tweens.length - 1; i >= 0; i--) {
                 let tween = this.tweens[i];
                 if (tween) tween.update();
             }
-        }
-
-        //Update all the shaking sprites
-        if (this.shakingSprites.length > 0) {
-            for (let i = this.shakingSprites.length - 1; i >= 0; i--) {
-                let shakingSprite = this.shakingSprites[i];
-                if (shakingSprite.updateShake) shakingSprite.updateShake();
-            }
-        }
-
-        //Update the pointer for drag and drop
-        if (this.draggableSprites.length > 0) {
-            this.pointer.updateDragAndDrop(this.draggableSprites);
         }
 
         //Run the current game `state` function if it's been defined and
@@ -121,7 +78,6 @@ export default class Game {
 
         //Render the canvas
         this.render(this.canvas);
-
     }
 
     //The `start` method that gets the whole engine going. This needs to
@@ -173,7 +129,7 @@ export default class Game {
     scaleToWindow(backgroundColor = "#2C3539") {
 
         let scaleX, scaleY, scale, center;
-        
+
         //1. Scale the canvas to the correct size
         //Figure out the scale amount on each axis
         scaleX = window.innerWidth / this.canvas.width;
@@ -224,17 +180,3 @@ export default class Game {
         this.scale = scale;
     }
 }
-
-/*
-game
-----
-A high level wrapper for creating a game
-*/
-
-export function game(
-    width = 256, height = 256,
-    setup, assetsToLoad, load
-) {
-    return new Game(width, height, setup, assetsToLoad, load);
-}
-

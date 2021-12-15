@@ -11,8 +11,8 @@ export default class Asteroids {
         this.elements = [];
     }
 
-    generate(count, scene, startX, endX, startY, endY) {
-        for (let i = 0; i < count; i++) {
+    generate(scene, startX, endX, startY, endY) {
+        for (let i = 0; i < randomInt(6,10); i++) {
             const asteroid = new Asteroid(
                 assets[`assets/images/asteroid-${randomInt(1, 5)}.png`],
                 randomInt(startX, endX),
@@ -26,7 +26,7 @@ export default class Asteroids {
     fly(target, callback) {
         multipleCircleCollision(this.elements);
 
-        this.elements = this.elements.filter(asteroid => {
+        this.elements.forEach(asteroid => {
             asteroid.fly();
 
             const hitEdge = contain(asteroid, this.bounds, true);
@@ -40,17 +40,16 @@ export default class Asteroids {
             }
 
             if (hit(target, asteroid, true, true, false)) {
-                callback();
                 this.destroy(asteroid);
-                return false;
+                callback();
             }
-            return true;
         });
     }
 
     destroy(asteroid) {
+        const target = this.elements.indexOf(asteroid);
+        this.elements.splice(target, 1);
         remove(asteroid);
         destroySound();
     }
-
 }

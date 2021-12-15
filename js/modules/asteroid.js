@@ -1,6 +1,5 @@
-import {Sprite, remove} from "../library/display.js";
+import {Sprite} from "../library/display.js";
 import {randomInt} from "../library/utilities.js";
-import {destroySound} from "./sounds.js";
 
 export default class Asteroid extends Sprite {
     constructor(source, x, y) {
@@ -26,7 +25,7 @@ export default class Asteroid extends Sprite {
         this.rotation += 0.01;
     }
 
-    updateVelocity(velocityAxis,frictionAxis) {
+    updateVelocity(velocityAxis, frictionAxis) {
         this[velocityAxis] *= this[frictionAxis];
     }
 }

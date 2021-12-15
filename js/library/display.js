@@ -16,7 +16,7 @@ It contains all the properties shared by the sprites.
 It shouldn't be instantiated, just extended.
 */
 
-class DisplayObject {
+export class DisplayObject {
     constructor() {
         //The sprite's position and size
         this.x = 0;
@@ -725,43 +725,6 @@ class Group extends DisplayObject {
             throw new Error(`${sprite} is not a child of ${this}`);
         }
     }
-
-    /*
-     calculateSize() {
-
-       //Calculate the width based on the size of the largest child
-       //that this sprite contains
-       if (this.children.length > 0) {
-
-         //Some temporary variables to help track the new
-         //calculated width and height
-         let newWidth = 0,
-             newHeight = 0;
-
-         //Find the width and height of the child sprites furthest
-         //from the top left corner of the group
-         this.children.forEach(child => {
-
-           //Find child sprites that combined x value and width
-           //that's greater than the current value of `newWidth`
-           if (child.x + child.width > newWidth) {
-
-             //The new width is a combination of the child's
-             //x position and its width
-             newWidth = child.x + child.width;
-           }
-           if (child.y + child.height > newHeight) {
-             newHeight = child.y + child.height;
-           }
-         });
-
-         //Apply the `newWidth` and `newHeight` to this sprite's width
-         //and height
-         this.width = newWidth;
-         this.height = newHeight;
-       }
-     }
-     */
 
     calculateSize() {
 

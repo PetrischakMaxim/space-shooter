@@ -3,23 +3,20 @@ import Score from "./modules/score.js";
 import Asteroids from "./modules/asteroids.js";
 import Rocket from "./modules/rocket.js";
 import HealthBar from "./modules/healthBar.js";
-import {gameSize, fontFamily, topOffset, fps, easing, colors, messages, assetsToLoad} from "./modules/constants.js"
+import {progressBar, rectangle, button, sprite, text, remove} from "./library/display.js";
+import {wait} from "./library/utilities.js";
+import {hit} from "./library/collision.js";
+import {gameSize, fontFamily, topOffset, fps, easing, Color, Title, assetsToLoad, delay} from "./modules/constants.js";
 
+//Game variables
 const game = new Game(gameSize, gameSize, setup, assetsToLoad, load);
 
 const {
     canvas,
-    rectangle,
-    progressBar,
     assets,
-    text,
-    sprite,
     stage,
     group,
-    remove,
-    randomInt,
-    hit,
-    slide
+    slide,
 } = game;
 
 const localBounds = {
@@ -29,19 +26,25 @@ const localBounds = {
     height: stage.height
 };
 
-const score = new Score();
-const healthBar = new HealthBar();
-const asteroids = new Asteroids(localBounds);
+const Scene = {
+    Start: group(),
+    Main: group(),
+    End: group(),
+};
 
-//Game variables
-let startScene, mainScene, endScene, rocket;
+const Component = {
+    Score: new Score(),
+    HealthBar: new HealthBar(),
+    Asteroids: new Asteroids(localBounds),
+    Rocket: null,
+}
 
 game.start();
 
 game.scaleToWindow();
 
 window.addEventListener("resize", () => {
-    game.scaleToWindow(colors["dark"]);
+    game.scaleToWindow(Color.Dark);
 });
 
 function load() {
@@ -54,81 +57,94 @@ function setup() {
     initStartScene();
 }
 
+function changeScene(prevScene, nextScene) {
+    slide(prevScene, gameSize * -1, 0, fps, easing);
+    prevScene.visible = false;
+    slide(nextScene, 0, 0, fps, easing);
+}
+
 function initStartScene() {
-    let music = assets["assets/sounds/theme.mp3"];
-    let logo = sprite(assets["assets/images/title.png"], 0, topOffset);
+    const music = assets["assets/sounds/theme.mp3"];
+    const logo = sprite(assets["assets/images/title.png"], 0, topOffset);
     logo.scaleX = 0.8;
     logo.scaleY = 0.8;
 
-    let titleOffset = topOffset * 2 + logo.height;
-    let title = text(messages["start"], `36px ${fontFamily}`, colors["light"], titleOffset, titleOffset);
+    const titleOffset = topOffset * 2 + logo.height;
+    const title = text(Title["Start"], `36px ${fontFamily}`, Color.Light, titleOffset, titleOffset);
 
-    let buttonOffset = titleOffset * 1.2;
-    let startButton = game.button([
+    const buttonOffset = titleOffset * 1.2;
+    const startButton = button([
         assets["assets/images/up.png"],
         assets["assets/images/over.png"],
         assets["assets/images/down.png"]
     ], buttonOffset * -1, buttonOffset);
-    let buttonXOffset = gameSize / 2 - startButton.halfWidth;
+    const buttonXOffset = gameSize / 2 - startButton.halfWidth;
 
-    slide(title, (buttonXOffset), titleOffset, fps, easing);
-    slide(startButton, (buttonXOffset), buttonOffset, fps, easing);
-    startScene = group(logo, title, startButton);
+    slide(title, buttonXOffset, titleOffset, fps, easing);
+    slide(startButton, buttonXOffset + 15, buttonOffset, fps, easing);
+
+    Scene.Start.addChild(logo);
+    Scene.Start.addChild(title);
+    Scene.Start.addChild(startButton);
 
     startButton.press = () => {
         if (!music.playing) music.play();
         game.state = play;
-        startScene.visible = false;
+        changeScene(Scene.Start, Scene.Main);
         initMainScene();
     };
 }
 
 function initMainScene() {
-    const topBar = rectangle(gameSize, topOffset, colors["dark"]);
+    const example = sprite(assets["assets/images/controls.png"], gameSize / 2 - 120, gameSize - 120);
+    example.scaleX = 0.5;
+    example.scaleY = 0.5;
 
-    healthBar.addSprite(topBar, assets["assets/images/heart.png"]);
-    topBar.addChild(healthBar);
+    const topBar = rectangle(gameSize, topOffset, Color["Dark"]);
+    Component.HealthBar.addSprite(topBar, assets["assets/images/heart.png"]);
+    topBar.addChild(Component.HealthBar);
+    topBar.addChild(Component.Score.message);
 
-    score.init();
-    topBar.addChild(score.message);
-
-    rocket = new Rocket(
+    Component.Rocket = new Rocket(
         assets["assets/images/rocket.png"],
         assets["assets/images/fire.png"],
         assets["assets/sounds/fly.wav"],
         localBounds
     );
 
-    stage.putTop(rocket);
+    stage.putTop(Component.Rocket);
 
-    mainScene = group(rocket, topBar);
+    Scene.Main.addChild(example);
+    Scene.Main.addChild(Component.Rocket);
+    Scene.Main.addChild(topBar);
 
-    asteroids.generate(
-        randomInt(6, 10),
-        mainScene,
+    Component.Asteroids.generate(
+        Scene.Main,
         0,
         canvas.width - topOffset,
-        topOffset + rocket.height,
+        topOffset + Component.Rocket.height,
         canvas.height,
-    )
+    );
 }
 
 function initEndScene(message) {
-    let title = text(message, `36px ${fontFamily}`, colors["light"], 150, 150);
-    let finalScore = score.message;
-    finalScore.content = `YOUR SCORE IS ${score.value}`;
-    finalScore.x = 150;
+    const title = text(message, `36px ${fontFamily}`, Color["Light"], gameSize / 2 - 80, 160);
+
+    const finalScore = Component.Score.message;
+    finalScore.content = `SCORE IS ${Component.Score.value}`;
+
+    finalScore.x = gameSize / 2 - finalScore.width;
     finalScore.y = 200;
 
-    endScene = group(title, finalScore);
-    mainScene.visible = false;
+    Scene.End.addChild(title);
+    Scene.End.addChild(finalScore);
 }
 
 function hitBulletWithAsteroid(bullet, asteroids) {
-    hit(bullet, asteroids, false, false, false,
+    hit(bullet, asteroids.elements, false, false, false,
         (collision, asteroid) => {
             asteroids.destroy(asteroid);
-            score.update();
+            Component.Score.update();
             remove(bullet);
         }
     );
@@ -136,29 +152,30 @@ function hitBulletWithAsteroid(bullet, asteroids) {
 
 function play() {
 
-    rocket.fly(() =>
-        healthBar.checkPoints(() =>
-            end(messages['end'])
+    Component.Rocket.fly(() =>
+        Component.HealthBar.checkPoints(() =>
+            end(Title.End)
         ),
     );
 
-    rocket.bulletsFly(
+    Component.Rocket.bulletsFly(
         hitBulletWithAsteroid,
-        asteroids.elements
+        Component.Asteroids
     );
 
-    asteroids.fly(rocket, () => {
-            rocket.hit = true
+    Component.Asteroids.fly(Component.Rocket, () => {
+            Component.Rocket.hit = true
         }
     )
 
-    if (!asteroids.elements.length) {
-        end(messages["win"])
+    if (!Component.Asteroids.elements.length) {
+        end(Title.Win)
     }
 }
 
 function end(message) {
     game.paused = true;
+    changeScene(Scene.Main, Scene.End);
     initEndScene(message);
-    game.wait(1500).then(() => location.reload());
+    wait(delay).then(location.reload);
 }

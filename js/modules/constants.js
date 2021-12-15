@@ -3,16 +3,17 @@ const fontFamily = "Ubuntu,Arial,sans-serif";
 const topOffset = 40;
 const fps = 30;
 const easing = ["decelerationCubed"];
-const colors = {
-    "dark": "#00000080",
-    "light": "#FFFFFF",
-    "primary": "#FFA500"
+const delay = 2000;
+const Color = {
+    "Dark": "#00000080",
+    "Light": "#FFFFFF",
+    "Primary": "#FFA500"
 };
 
-const messages = {
-    start: "START GAME!",
-    end: "GAME OVER!",
-    win: "YOU WIN!"
+const Title = {
+    Start: "START GAME!",
+    End: "GAME OVER!",
+    Win: "YOU WIN!"
 };
 
 const assetsToLoad = [
@@ -28,9 +29,10 @@ const assetsToLoad = [
     "assets/images/up.png",
     "assets/images/over.png",
     "assets/images/down.png",
+    "assets/images/controls.png",
     "assets/fonts/ubuntu.woff2",
     "assets/sounds/theme.mp3",
     "assets/sounds/fly.wav"
 ];
 
-export {gameSize, fontFamily, topOffset, fps, easing, colors, messages, assetsToLoad};
+export {gameSize, fontFamily, topOffset, fps, easing, Color, Title, assetsToLoad, delay};

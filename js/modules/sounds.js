@@ -22,13 +22,13 @@ export const destroySound = () => {
     soundEffect(
         16, //frequency
         0, //attack
-        1, //decay
-        "sawtooth", //waveform
+        0.5, //decay
+        "square", //waveform
         1, //volume
         0, //pan
         0, //wait before playing
         0, //frequency bend amount
-        true, //reverse
+        false, //reverse
         0, //random frequency range
         50, //dissonance
         undefined //echo: [delay, feedback, filter]

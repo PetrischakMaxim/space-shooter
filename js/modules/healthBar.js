@@ -1,5 +1,5 @@
-import {gameSize, messages} from "./constants.js";
-import {Rectangle, rectangle, sprite} from "../library/display.js";
+import {gameSize} from "./constants.js";
+import {Rectangle, sprite} from "../library/display.js";
 
 export default class HealthBar {
     constructor(points = 6) {
@@ -11,7 +11,7 @@ export default class HealthBar {
         this.rect.y = this.spriteSize / 2;
     }
 
-    addSprite(stage,spriteSource) {
+    addSprite(stage, spriteSource) {
         stage.addChild(this.rect);
         for (let i = 0; i < this.points; i++) {
             const child = sprite(spriteSource);

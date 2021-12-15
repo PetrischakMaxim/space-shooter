@@ -2,18 +2,17 @@ import {Sprite, circle} from "../library/display.js";
 import Fire from "./fire.js";
 import {keyboard} from "../library/interactive.js";
 import {randomFloat, contain, shoot} from "../library/utilities.js";
-import {colors} from "./constants.js";
+import {Color} from "./constants.js";
 import {shootSound} from "./sounds.js";
-
 
 export default class Rocket extends Sprite {
 
     constructor(source, fireSource, soundSource, bounds) {
         super(source);
         this.bounds = bounds;
-        this.rotateStep = 0.05;
+        this.rotateStep = 0.025;
         this.rotationSpeed = 0;
-        this.friction = 0.97;
+        this.friction = 0.975;
         this.acceleration = 0.35;
         this.ratio = 2;
         this.width = 186 / this.ratio;
@@ -109,7 +108,7 @@ export default class Rocket extends Sprite {
         shootSound();
     }
 
-    shoot = () => circle(5, colors["primary"]);
+    shoot = () => circle(5, Color.Primary);
 
     bulletsFly(callback, asteroids) {
         this.bullets = this.bullets.filter(bullet => {
@@ -128,11 +127,7 @@ export default class Rocket extends Sprite {
     }
 
     isHit() {
-        if (this.hit) {
-            this.alpha = 0.5;
-        } else {
-            this.alpha = 1;
-        }
+        (this.hit) ? (this.alpha = 0.5) : (this.alpha = 1);
         return this.hit;
     }
 }
