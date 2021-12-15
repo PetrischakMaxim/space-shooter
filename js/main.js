@@ -6,7 +6,7 @@ import HealthBar from "./modules/healthBar.js";
 import {progressBar, rectangle, button, sprite, text, remove} from "./library/display.js";
 import {wait} from "./library/utilities.js";
 import {hit} from "./library/collision.js";
-import {gameSize, fontFamily, topOffset, fps, easing, Color, Title, assetsToLoad, delay} from "./modules/constants.js";
+import {gameSize, fontFamily, topOffset, fps, easing, Color, Title, assetsToLoad,delay} from "./modules/constants.js";
 
 //Game variables
 const game = new Game(gameSize, gameSize, setup, assetsToLoad, load);
@@ -177,5 +177,5 @@ function end(message) {
     game.paused = true;
     changeScene(Scene.Main, Scene.End);
     initEndScene(message);
-    wait(delay).then(location.reload);
+    wait(delay).then(() => location.reload());
 }
