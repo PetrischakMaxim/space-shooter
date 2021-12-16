@@ -2,7 +2,7 @@ import {Sprite, circle} from "../library/display.js";
 import Fire from "./fire.js";
 import {keyboard} from "../library/interactive.js";
 import {randomFloat, contain, shoot} from "../library/utilities.js";
-import {Color} from "./constants.js";
+import {colors} from "./constants.js";
 import {shootSound} from "./sounds.js";
 
 export default class Rocket extends Sprite {
@@ -22,7 +22,7 @@ export default class Rocket extends Sprite {
         this.frictionX = this.friction;
         this.frictionY = this.friction;
         this.rotationSpeed = 0;
-        this.flyForward = false;
+        this.flying = false;
         this.hit = false;
         this.sound = soundSource;
         this.fire = new Fire(fireSource, this);
@@ -47,8 +47,8 @@ export default class Rocket extends Sprite {
         right.release = () => {
             if (!left.isDown) this.stop();
         }
-        up.press = () => this.toggleFlight(true);
-        up.release = () => this.toggleFlight(false);
+        up.press = () => this.setFlightState(true);
+        up.release = () => this.setFlightState(false);
         space.press = () => this.shootBullet();
     }
 
@@ -64,16 +64,16 @@ export default class Rocket extends Sprite {
         this.rotationSpeed = 0;
     }
 
-    toggleFlight(flag) {
-        this.flyForward = flag;
-        if (this.flyForward) {
+    setFlightState(isFlying) {
+        this.flying = isFlying;
+        if (this.flying) {
             this.sound.play();
         }
     }
 
     updateFlight() {
         this.rotation += this.rotationSpeed;
-        if (this.flyForward) {
+        if (this.flying) {
             this.vx += this.accelerationX * Math.cos(this.rotation);
             this.vy += this.accelerationY * Math.sin(this.rotation);
             this.fire.burn(randomFloat(0.8, 1.5));
@@ -96,7 +96,7 @@ export default class Rocket extends Sprite {
         this.hit = false;
     }
 
-    shootBullet = () => {
+    shootBullet() {
         shoot(
             this,
             this.rotation,
@@ -108,9 +108,11 @@ export default class Rocket extends Sprite {
         shootSound();
     }
 
-    shoot = () => circle(5, Color.Primary);
+    shoot() {
+        return circle(5, colors.primary);
+    }
 
-    bulletsFly(callback, asteroids) {
+    fireBullets(callback, asteroids) {
         this.bullets = this.bullets.filter(bullet => {
             bullet.x += bullet.vx;
             bullet.y += bullet.vy;

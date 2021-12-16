@@ -1,6 +1,7 @@
 import {Sprite} from "../library/display.js";
 
-export default class Fire extends Sprite{
+export default class Fire extends Sprite {
+
     constructor(source, parent) {
         super(source);
         this.source = source;

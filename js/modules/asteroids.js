@@ -11,8 +11,8 @@ export default class Asteroids {
         this.elements = [];
     }
 
-    generate(scene, startX, endX, startY, endY) {
-        for (let i = 0; i < randomInt(6,10); i++) {
+    generate(scene, startX, endX, startY, endY, minAmount = 6) {
+        for (let i = 0; i < randomInt(minAmount, 10); i++) {
             const asteroid = new Asteroid(
                 assets[`assets/images/asteroid-${randomInt(1, 5)}.png`],
                 randomInt(startX, endX),

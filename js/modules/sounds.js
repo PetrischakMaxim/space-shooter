@@ -1,7 +1,7 @@
 import {soundEffect} from "../library/sound.js";
 
-export const shootSound = () => {
-    soundEffect(
+export function shootSound() {
+    return soundEffect(
         880, //frequency
         0, //attack
         0.5, //decay
@@ -18,8 +18,8 @@ export const shootSound = () => {
     );
 }
 
-export const destroySound = () => {
-    soundEffect(
+export function destroySound() {
+    return soundEffect(
         16, //frequency
         0, //attack
         0.5, //decay

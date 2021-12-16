@@ -2,6 +2,7 @@ import {Sprite} from "../library/display.js";
 import {randomInt} from "../library/utilities.js";
 
 export default class Asteroid extends Sprite {
+
     constructor(source, x, y) {
         super(source);
         this.x = x;

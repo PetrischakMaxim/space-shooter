@@ -2,6 +2,7 @@ import {gameSize} from "./constants.js";
 import {Rectangle, sprite} from "../library/display.js";
 
 export default class HealthBar {
+
     constructor(points = 6) {
         this.points = points;
         this.spriteSize = 20;
