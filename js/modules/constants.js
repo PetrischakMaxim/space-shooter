@@ -4,16 +4,18 @@ const topOffset = 40;
 const fps = 30;
 const easing = ["decelerationCubed"];
 const delay = 2000;
-const Color = {
-    "Dark": "#00000080",
-    "Light": "#FFFFFF",
-    "Primary": "#FFA500"
+const initialPoints = 6;
+
+const colors = {
+    "dark": "#00000080",
+    "light": "#FFFFFF",
+    "primary": "#FFA500"
 };
 
-const Title = {
-    Start: "START GAME!",
-    End: "GAME OVER!",
-    Win: "YOU WIN!"
+const titles = {
+    start: "START GAME!",
+    end: "GAME OVER!",
+    win: "YOU WIN!"
 };
 
 const assetsToLoad = [
@@ -35,4 +37,4 @@ const assetsToLoad = [
     "assets/sounds/fly.wav"
 ];
 
-export {gameSize, fontFamily, topOffset, fps, easing, Color, Title, assetsToLoad, delay};
+export {gameSize, fontFamily, topOffset, fps, easing, colors, titles, assetsToLoad, delay, initialPoints};
