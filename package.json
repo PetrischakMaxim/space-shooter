@@ -1,0 +1,25 @@
+{
+  "name": "space-shooter",
+  "version": "1.0.0",
+  "description": "![Poster](poster.jpg)",
+  "main": "index.js",
+  "scripts": {
+    "serve": "webpack-dev-server ./js/main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PetrischakMaxim/space-shooter.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PetrischakMaxim/space-shooter/issues"
+  },
+  "homepage": "https://github.com/PetrischakMaxim/space-shooter#readme",
+  "devDependencies": {
+    "webpack": "5.65.0",
+    "webpack-cli": "4.9.1",
+    "webpack-dev-server": "4.6.0"
+  }
+}
