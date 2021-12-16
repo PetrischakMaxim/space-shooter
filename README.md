@@ -25,9 +25,9 @@ Click the on the poster and to see a demo
 |              | Button              |
 |--------------|---------------------|
 | Move         | <kbd>Up</kbd>       |
-| Turn Left    | <kbd>left</kbd>     |
-| Turn Right   | <kbd>right</kbd>    |
-| Fire bullets | <kbd>spacebar</kbd> |
+| Turn Left    | <kbd>Left</kbd>     |
+| Turn Right   | <kbd>Right</kbd>    |
+| Fire bullets | <kbd>Spacebar</kbd> |
 
 
 ## How to play
