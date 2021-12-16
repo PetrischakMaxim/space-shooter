@@ -44,7 +44,7 @@ game.start();
 game.scaleToWindow();
 
 window.addEventListener("resize", () => {
-    game.scaleToWindow(Color.Dark);
+    game.scaleToWindow();
 });
 
 function load() {

@@ -1,6 +1,6 @@
 import * as utilities from "./utilities.js";
 import * as display from "./display.js";
-import * as tween from  "./tween.js";
+import * as tween from "./tween.js";
 import {makePointer} from "./interactive.js";
 
 export default class Game {
@@ -19,9 +19,6 @@ export default class Game {
 
         //Make the pointer
         this.pointer = makePointer(this.canvas);
-
-        //The game's scale
-        this.scale = 1;
 
         //Set the game `state`
         this.state = undefined;
@@ -125,58 +122,10 @@ export default class Game {
         this.paused = false;
     }
 
-    //Center and scale the game engine inside the HTML page
-    scaleToWindow(backgroundColor = "#2C3539") {
-
-        let scaleX, scaleY, scale, center;
-
-        //1. Scale the canvas to the correct size
-        //Figure out the scale amount on each axis
-        scaleX = window.innerWidth / this.canvas.width;
-        scaleY = window.innerHeight / this.canvas.height;
-
-        //Scale the canvas based on whichever value is less: `scaleX` or `scaleY`
-        scale = Math.min(scaleX, scaleY);
-        this.canvas.style.transformOrigin = "0 0";
+    scaleToWindow() {
+        const scaleX = window.innerWidth / this.canvas.offsetWidth;
+        const scaleY = window.innerHeight / this.canvas.offsetHeight;
+        const scale = Math.min(scaleX, scaleY);
         this.canvas.style.transform = "scale(" + scale + ")";
-
-        //2. Center the canvas.
-        //Decide whether to center the canvas vertically or horizontally.
-        //Wide canvases should be centered vertically, and
-        //square or tall canvases should be centered horizontally
-
-        if (this.canvas.width > this.canvas.height) {
-            center = "vertically";
-        } else {
-            center = "horizontally";
-        }
-
-        //Center horizontally (for square or tall canvases)
-        if (center === "horizontally") {
-            let margin = (window.innerWidth - this.canvas.width * scaleY) / 2;
-            this.canvas.style.marginLeft = margin + "px";
-            this.canvas.style.marginRight = margin + "px";
-        }
-
-        //Center vertically (for wide canvases)
-        if (center === "vertically") {
-            let margin = (window.innerHeight - this.canvas.height * scaleX) / 2;
-            this.canvas.style.marginTop = margin + "px";
-            this.canvas.style.marginBottom = margin + "px";
-        }
-
-        //3. Remove any padding from the canvas and set the canvas
-        //display style to "block"
-        this.canvas.style.paddingLeft = 0;
-        this.canvas.style.paddingRight = 0;
-        this.canvas.style.display = "block";
-
-        //4. Set the color of the HTML body background
-        document.body.style.backgroundColor = backgroundColor;
-
-        //5. Set the game engine and pointer to the correct scale.
-        //This is important for correct hit testing between the pointer and sprites
-        this.pointer.scale = scale;
-        this.scale = scale;
     }
 }
