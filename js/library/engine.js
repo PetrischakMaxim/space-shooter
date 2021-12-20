@@ -2,6 +2,7 @@ import * as utilities from "./utilities.js";
 import * as display from "./display.js";
 import * as tween from "./tween.js";
 import {makePointer} from "./interactive.js";
+import {colors} from "../modules/constants.js";
 
 export default class Game {
     constructor(width = 256, height = 256, setup, assetsToLoad, load) {
@@ -11,14 +12,16 @@ export default class Game {
         Object.assign(this, tween);
 
         //Make the canvas and initialize the stage
-        this.canvas = this.makeCanvas(width, height, "none");
+        this.canvas = this.makeCanvas(width, height, "none", colors["dark"]);
 
-        this.canvas.style.backgroundColor = "white";
         this.stage.width = this.canvas.width;
         this.stage.height = this.canvas.height;
 
         //Make the pointer
         this.pointer = makePointer(this.canvas);
+
+        //The game's scale
+        this.scale = 1;
 
         //Set the game `state`
         this.state = undefined;
@@ -126,6 +129,37 @@ export default class Game {
         const scaleX = window.innerWidth / this.canvas.offsetWidth;
         const scaleY = window.innerHeight / this.canvas.offsetHeight;
         const scale = Math.min(scaleX, scaleY);
-        this.canvas.style.transform = "scale(" + scale + ")";
+        const center = this.getPosition(scale);
+
+        if (center === "horizontally") {
+            this.canvas.style.margin = `0px ${(window.innerWidth - this.canvas.offsetWidth * scale) / 2}px`
+        }
+
+        if (center === "vertically") {
+            this.canvas.style.margin = `${(window.innerHeight - this.canvas.offsetHeight * scale) / 2}px 0px`;
+        }
+
+        this.canvas.style.transform = `scale(${scale})`;
+        this.scale = scale;
+        this.pointer.scale = scale;
+    }
+
+    getPosition(scale) {
+        let position;
+        if (this.canvas.offsetWidth > this.canvas.offsetHeight) {
+            if (this.canvas.offsetWidth * scale < window.innerWidth) {
+                position = "horizontally";
+            } else {
+                position = "vertically";
+            }
+        } else {
+            if (this.canvas.offsetHeight * scale < window.innerHeight) {
+                position = "vertically";
+            } else {
+                position = "horizontally";
+            }
+        }
+
+        return position;
     }
 }
