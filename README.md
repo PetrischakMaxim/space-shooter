@@ -2,7 +2,7 @@
 The game created using `HTML5` `Canvas` `Vanilla JS`.
 
 ## Demo
-Click the on the poster and to see a demo
+Click on the poster and to see a demo
 [![Space Shooter Demo - Youtube](./posters/poster.jpg)](https://youtu.be/MTrX7byllUQ)
 
 ## Screenshots
@@ -12,7 +12,7 @@ Click the on the poster and to see a demo
 ## Game Features
 
 - Health bar for the rocket
-- Score for check your achievements
+- Score to check your achievements
 - Theme music and custom sounds
 - Sprite animation
    - asteroid flying
@@ -33,9 +33,9 @@ Click the on the poster and to see a demo
 ## How to play
 - Online:
   - Go to [this link](https://petrischakmaxim.github.io/space-shooter/)
-- Your PC:
-  - Download this repository
-  - Install [Node JS](https://nodejs.org/en/download)
-  - Enter `npm i`
-  - Enter `npm run serve`
+- Locally:
+  - Clone this repository
+  - Install dependencies `npm i`
+  - Start local web server `npm run serve`
+  - Go to [http://localhost:9000/](http://localhost:9000/)
   
