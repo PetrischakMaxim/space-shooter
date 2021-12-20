@@ -1,7 +1,7 @@
 {
   "name": "space-shooter",
   "version": "1.0.0",
-  "description": "![Poster](poster.jpg)",
+  "description": "2d space shooter game",
   "main": "index.js",
   "scripts": {
     "serve": "webpack-dev-server ./js/main.js"
